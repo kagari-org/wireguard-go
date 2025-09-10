@@ -71,7 +71,8 @@ func (device *Device) NewPeer(pk NoisePublicKey) (*Peer, error) {
 	defer device.peers.Unlock()
 
 	// check if over limit
-	if len(device.peers.keyMap) >= MaxPeers {
+	// we force this is ptp connection
+	if len(device.peers.keyMap) >= 1 {
 		return nil, errors.New("too many peers")
 	}
 

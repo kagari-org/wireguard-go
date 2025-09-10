@@ -14,11 +14,11 @@ import (
 	"runtime"
 	"strconv"
 
+	"github.com/kagari-org/wireguard-go/conn"
+	"github.com/kagari-org/wireguard-go/device"
+	"github.com/kagari-org/wireguard-go/ipc"
+	"github.com/kagari-org/wireguard-go/tun"
 	"golang.org/x/sys/unix"
-	"golang.zx2c4.com/wireguard/conn"
-	"golang.zx2c4.com/wireguard/device"
-	"golang.zx2c4.com/wireguard/ipc"
-	"golang.zx2c4.com/wireguard/tun"
 )
 
 const (

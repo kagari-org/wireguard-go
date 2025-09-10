@@ -8,7 +8,6 @@ package device
 import (
 	"encoding/binary"
 	"errors"
-	"net"
 	"os"
 	"sync"
 	"time"
@@ -16,8 +15,6 @@ import (
 	"github.com/kagari-org/wireguard-go/conn"
 	"github.com/kagari-org/wireguard-go/tun"
 	"golang.org/x/crypto/chacha20poly1305"
-	"golang.org/x/net/ipv4"
-	"golang.org/x/net/ipv6"
 )
 
 /* Outbound flow
@@ -249,25 +246,13 @@ func (device *Device) RoutineReadFromTUN() {
 			elem.packet = bufs[i][offset : offset+sizes[i]]
 
 			// lookup peer
+			device.peers.RLock()
 			var peer *Peer
-			switch elem.packet[0] >> 4 {
-			case 4:
-				if len(elem.packet) < ipv4.HeaderLen {
-					continue
-				}
-				dst := elem.packet[IPv4offsetDst : IPv4offsetDst+net.IPv4len]
-				peer = device.allowedips.Lookup(dst)
-
-			case 6:
-				if len(elem.packet) < ipv6.HeaderLen {
-					continue
-				}
-				dst := elem.packet[IPv6offsetDst : IPv6offsetDst+net.IPv6len]
-				peer = device.allowedips.Lookup(dst)
-
-			default:
-				device.log.Verbosef("Received packet with unknown IP version")
+			for _, p := range device.peers.keyMap {
+				peer = p
+				break
 			}
+			device.peers.RUnlock()
 
 			if peer == nil {
 				continue

@@ -14,8 +14,6 @@ import (
 
 	"github.com/kagari-org/wireguard-go/conn"
 	"golang.org/x/crypto/chacha20poly1305"
-	"golang.org/x/net/ipv4"
-	"golang.org/x/net/ipv6"
 )
 
 type QueueHandshakeElement struct {
@@ -467,45 +465,6 @@ func (peer *Peer) RoutineSequentialReceiver(maxBatchSize int) {
 				continue
 			}
 			dataPacketReceived = true
-
-			switch elem.packet[0] >> 4 {
-			case 4:
-				if len(elem.packet) < ipv4.HeaderLen {
-					continue
-				}
-				field := elem.packet[IPv4offsetTotalLength : IPv4offsetTotalLength+2]
-				length := binary.BigEndian.Uint16(field)
-				if int(length) > len(elem.packet) || int(length) < ipv4.HeaderLen {
-					continue
-				}
-				elem.packet = elem.packet[:length]
-				src := elem.packet[IPv4offsetSrc : IPv4offsetSrc+net.IPv4len]
-				if device.allowedips.Lookup(src) != peer {
-					device.log.Verbosef("IPv4 packet with disallowed source address from %v", peer)
-					continue
-				}
-
-			case 6:
-				if len(elem.packet) < ipv6.HeaderLen {
-					continue
-				}
-				field := elem.packet[IPv6offsetPayloadLength : IPv6offsetPayloadLength+2]
-				length := binary.BigEndian.Uint16(field)
-				length += ipv6.HeaderLen
-				if int(length) > len(elem.packet) {
-					continue
-				}
-				elem.packet = elem.packet[:length]
-				src := elem.packet[IPv6offsetSrc : IPv6offsetSrc+net.IPv6len]
-				if device.allowedips.Lookup(src) != peer {
-					device.log.Verbosef("IPv6 packet with disallowed source address from %v", peer)
-					continue
-				}
-
-			default:
-				device.log.Verbosef("Packet with invalid IP version from %v", peer)
-				continue
-			}
 
 			bufs = append(bufs, elem.buffer[:MessageTransportOffsetContent+len(elem.packet)])
 		}

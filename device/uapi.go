@@ -434,7 +434,8 @@ func (device *Device) IpcHandle(socket net.Conn) {
 		// handle operation
 		switch op {
 		case "set=1\n":
-			err = device.IpcSetOperation(buffered.Reader)
+			err = ipcErrorf(ipc.IpcErrorInvalid, "set operation not supported on this socket")
+			// err = device.IpcSetOperation(buffered.Reader)
 		case "get=1\n":
 			var nextByte byte
 			nextByte, err = buffered.ReadByte()

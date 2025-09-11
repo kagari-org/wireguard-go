@@ -106,7 +106,10 @@ func (device *Device) IpcGetOperation(w io.Writer) error {
 			sendf("protocol_version=1")
 			peer.endpoint.Lock()
 			if peer.endpoint.val != nil {
-				sendf("endpoint=%s", peer.endpoint.val.DstToString())
+				endpoint := peer.endpoint.val.DstToString()
+				if endpoint != "invalid AddrPort" {
+					sendf("endpoint=%s", endpoint)
+				}
 			}
 			peer.endpoint.Unlock()
 

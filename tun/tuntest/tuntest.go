@@ -110,7 +110,7 @@ type chTun struct {
 
 func (t *chTun) File() *os.File { return nil }
 
-func (t *chTun) Read(packets [][]byte, sizes []int, offset int) (int, error) {
+func (t *chTun) Read(packets [][]byte, sizes []int, users []bool, offset int) (int, error) {
 	select {
 	case <-t.c.closed:
 		return 0, os.ErrClosed
@@ -122,7 +122,7 @@ func (t *chTun) Read(packets [][]byte, sizes []int, offset int) (int, error) {
 }
 
 // Write is called by the wireguard device to deliver a packet for routing.
-func (t *chTun) Write(packets [][]byte, offset int) (int, error) {
+func (t *chTun) Write(packets [][]byte, users []bool, offset int) (int, error) {
 	if offset == -1 {
 		close(t.c.closed)
 		close(t.c.events)
@@ -150,6 +150,6 @@ func (t *chTun) MTU() (int, error)        { return DefaultMTU, nil }
 func (t *chTun) Name() (string, error)    { return "loopbackTun1", nil }
 func (t *chTun) Events() <-chan tun.Event { return t.c.events }
 func (t *chTun) Close() error {
-	t.Write(nil, -1)
+	t.Write(nil, nil, -1)
 	return nil
 }

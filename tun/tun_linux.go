@@ -332,7 +332,7 @@ func (tun *NativeTun) nameSlow() (string, error) {
 	return unix.ByteSliceToString(ifr[:]), nil
 }
 
-func (tun *NativeTun) Write(bufs [][]byte, offset int) (int, error) {
+func (tun *NativeTun) Write(bufs [][]byte, users []bool, offset int) (int, error) {
 	tun.writeOpMu.Lock()
 	defer func() {
 		tun.tcpGROTable.reset()
@@ -448,7 +448,7 @@ func handleVirtioRead(in []byte, bufs [][]byte, sizes []int, offset int) (int, e
 	return gsoSplit(in, hdr, bufs, sizes, offset, ipVersion == 6)
 }
 
-func (tun *NativeTun) Read(bufs [][]byte, sizes []int, offset int) (int, error) {
+func (tun *NativeTun) Read(bufs [][]byte, sizes []int, users []bool, offset int) (int, error) {
 	tun.readOpMu.Lock()
 	defer tun.readOpMu.Unlock()
 	select {

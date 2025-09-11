@@ -437,15 +437,17 @@ type fakeTUNDeviceSized struct {
 }
 
 func (t *fakeTUNDeviceSized) File() *os.File { return nil }
-func (t *fakeTUNDeviceSized) Read(bufs [][]byte, sizes []int, offset int) (n int, err error) {
+func (t *fakeTUNDeviceSized) Read(bufs [][]byte, sizes []int, users []bool, offset int) (n int, err error) {
 	return 0, nil
 }
-func (t *fakeTUNDeviceSized) Write(bufs [][]byte, offset int) (int, error) { return 0, nil }
-func (t *fakeTUNDeviceSized) MTU() (int, error)                            { return 0, nil }
-func (t *fakeTUNDeviceSized) Name() (string, error)                        { return "", nil }
-func (t *fakeTUNDeviceSized) Events() <-chan tun.Event                     { return nil }
-func (t *fakeTUNDeviceSized) Close() error                                 { return nil }
-func (t *fakeTUNDeviceSized) BatchSize() int                               { return t.size }
+func (t *fakeTUNDeviceSized) Write(bufs [][]byte, users []bool, offset int) (int, error) {
+	return 0, nil
+}
+func (t *fakeTUNDeviceSized) MTU() (int, error)        { return 0, nil }
+func (t *fakeTUNDeviceSized) Name() (string, error)    { return "", nil }
+func (t *fakeTUNDeviceSized) Events() <-chan tun.Event { return nil }
+func (t *fakeTUNDeviceSized) Close() error             { return nil }
+func (t *fakeTUNDeviceSized) BatchSize() int           { return t.size }
 
 func TestBatchSize(t *testing.T) {
 	d := Device{}

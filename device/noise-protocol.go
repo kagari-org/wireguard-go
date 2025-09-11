@@ -58,6 +58,7 @@ const (
 	MessageResponseType    = 2
 	MessageCookieReplyType = 3
 	MessageTransportType   = 4
+	MessageUser            = 5
 )
 
 const (

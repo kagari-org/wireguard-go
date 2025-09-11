@@ -29,6 +29,7 @@ type QueueInboundElement struct {
 	counter  uint64
 	keypair  *Keypair
 	endpoint conn.Endpoint
+	user     bool
 }
 
 type QueueInboundElementsContainer struct {
@@ -138,7 +139,7 @@ func (device *Device) RoutineReceiveIncoming(maxBatchSize int, recv conn.Receive
 
 			// check if transport
 
-			case MessageTransportType:
+			case MessageTransportType, MessageUser:
 
 				// check size
 
@@ -171,6 +172,7 @@ func (device *Device) RoutineReceiveIncoming(maxBatchSize int, recv conn.Receive
 				elem.keypair = keypair
 				elem.endpoint = endpoints[i]
 				elem.counter = 0
+				elem.user = msgType == MessageUser
 
 				elemsForPeer, ok := elemsByPeer[peer]
 				if !ok {
@@ -433,6 +435,7 @@ func (peer *Peer) RoutineSequentialReceiver(maxBatchSize int) {
 	device.log.Verbosef("%v - Routine: sequential receiver - started", peer)
 
 	bufs := make([][]byte, 0, maxBatchSize)
+	users := make([]bool, 0, maxBatchSize)
 
 	for elemsContainer := range peer.queue.inbound.c {
 		if elemsContainer == nil {
@@ -467,6 +470,7 @@ func (peer *Peer) RoutineSequentialReceiver(maxBatchSize int) {
 			dataPacketReceived = true
 
 			bufs = append(bufs, elem.buffer[:MessageTransportOffsetContent+len(elem.packet)])
+			users = append(users, elem.user)
 		}
 
 		peer.rxBytes.Add(rxBytesLen)
@@ -480,7 +484,7 @@ func (peer *Peer) RoutineSequentialReceiver(maxBatchSize int) {
 			peer.timersDataReceived()
 		}
 		if len(bufs) > 0 {
-			_, err := device.tun.device.Write(bufs, MessageTransportOffsetContent)
+			_, err := device.tun.device.Write(bufs, users, MessageTransportOffsetContent)
 			if err != nil && !device.isClosed() {
 				device.log.Errorf("Failed to write packets to TUN device: %v", err)
 			}
@@ -490,6 +494,7 @@ func (peer *Peer) RoutineSequentialReceiver(maxBatchSize int) {
 			device.PutInboundElement(elem)
 		}
 		bufs = bufs[:0]
+		users = users[:0]
 		device.PutInboundElementsContainer(elemsContainer)
 	}
 }

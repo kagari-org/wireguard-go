@@ -120,7 +120,7 @@ func (tun *netTun) Events() <-chan tun.Event {
 	return tun.events
 }
 
-func (tun *netTun) Read(buf [][]byte, sizes []int, offset int) (int, error) {
+func (tun *netTun) Read(buf [][]byte, sizes []int, users []bool, offset int) (int, error) {
 	view, ok := <-tun.incomingPacket
 	if !ok {
 		return 0, os.ErrClosed
@@ -134,7 +134,7 @@ func (tun *netTun) Read(buf [][]byte, sizes []int, offset int) (int, error) {
 	return 1, nil
 }
 
-func (tun *netTun) Write(buf [][]byte, offset int) (int, error) {
+func (tun *netTun) Write(buf [][]byte, users []bool, offset int) (int, error) {
 	for _, buf := range buf {
 		packet := buf[offset:]
 		if len(packet) == 0 {

@@ -47,6 +47,7 @@ type QueueOutboundElement struct {
 	nonce   uint64                // nonce for encryption
 	keypair *Keypair              // keypair for encryption
 	peer    *Peer                 // related peer
+	user    bool
 }
 
 type QueueOutboundElementsContainer struct {
@@ -214,6 +215,7 @@ func (device *Device) RoutineReadFromTUN() {
 		readErr     error
 		elems       = make([]*QueueOutboundElement, batchSize)
 		bufs        = make([][]byte, batchSize)
+		users       = make([]bool, batchSize)
 		elemsByPeer = make(map[*Peer]*QueueOutboundElementsContainer, batchSize)
 		count       = 0
 		sizes       = make([]int, batchSize)
@@ -236,13 +238,14 @@ func (device *Device) RoutineReadFromTUN() {
 
 	for {
 		// read packets
-		count, readErr = device.tun.device.Read(bufs, sizes, offset)
+		count, readErr = device.tun.device.Read(bufs, sizes, users, offset)
 		for i := 0; i < count; i++ {
 			if sizes[i] < 1 {
 				continue
 			}
 
 			elem := elems[i]
+			elem.user = users[i]
 			elem.packet = bufs[i][offset : offset+sizes[i]]
 
 			// lookup peer
@@ -437,7 +440,13 @@ func (device *Device) RoutineEncryption(id int) {
 			fieldReceiver := header[4:8]
 			fieldNonce := header[8:16]
 
-			binary.LittleEndian.PutUint32(fieldType, MessageTransportType)
+			var msgType uint32
+			if elem.user {
+				msgType = MessageUser
+			} else {
+				msgType = MessageTransportType
+			}
+			binary.LittleEndian.PutUint32(fieldType, msgType)
 			binary.LittleEndian.PutUint32(fieldReceiver, elem.keypair.remoteIndex)
 			binary.LittleEndian.PutUint64(fieldNonce, elem.nonce)
 
